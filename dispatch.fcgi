@@ -5,6 +5,10 @@ import re
 from flup.server.fcgi import WSGIServer
 from mako.template import Template
 
+from datetime import datetime
+from tzinfo_examples import Local
+
+
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
 
@@ -46,6 +50,12 @@ def static(environ, start_response, args):
     ok200(start_response)
     return render_tpl('base', args)
 
+def datetime_from_localstr(localstr):
+    date = datetime.strptime(localstr, '%Y-%m-%d %H:%M')
+    date = date - Local.utcoffset(date)
+
+    return date
+
 def blog(environ, start_response, args):
     from configobj import ConfigObj
 
@@ -63,6 +73,27 @@ def blog(environ, start_response, args):
             return err404(start_response)
         args['PAGE_TITLE'] = vars['title']
         args['CONTENT'] = render_tpl('blog/one', vars)
+
+    elif args.get('rss', False):
+
+        import PyRSS2Gen
+        items = []
+        for (slug, vars) in index.items():
+            vars.update(args)
+            items.append(PyRSS2Gen.RSSItem(
+               title = vars['title'],
+               link = 'http://ongardie.net/blog/%s/' % slug,
+               description = render_file('var/blog/%s/blurb.html' % slug, vars),
+               guid = PyRSS2Gen.Guid('http://ongardie.net/blog/%s/' % slug),
+               pubDate = datetime_from_localstr(vars['date'])))
+        rss = PyRSS2Gen.RSS2(
+            title = "ongardie.net",
+            link = "http://ongardie.net/blog/",
+            description = "ongardie.net Blog",
+            lastBuildDate = datetime.now(),
+            items = items)
+        start_response('200 OK', [('Content-Type', 'text/xml')])
+        return rss.to_xml()
 
     else:
 
@@ -115,6 +146,7 @@ def www_app(environ, start_response):
            (r'/diego/', static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'diego'}),
            (r'/blog/',  blog),
            (r'/blog/(?P<slug>[\w-]{1,99})/', blog),
+           (r'/blog/rss.xml', blog, {'rss': True}),
           ]
 
     ret = find_controller(map, environ['PATH_INFO'])
