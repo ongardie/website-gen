@@ -44,3 +44,5 @@ def www_app(environ, start_response):
 
 if __name__ == '__main__':
     WSGIServer(www_app).run()
+
+# vim: et sw=4 ts=4:
