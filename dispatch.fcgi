@@ -2,8 +2,8 @@
 
 import os
 import re
-import string
 from flup.server.fcgi import WSGIServer
+from mako.template import Template
 
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
@@ -32,8 +32,8 @@ def render_file(file, args=None):
     if args is None:
         return html
     else:
-        out = string.Template(html)
-        return out.substitute(args)
+        out = Template(html)
+        return out.render(**args)
 
 def render_tpl(template, args=None):
     return render_file('var/templates/%s.html' % template, args)
