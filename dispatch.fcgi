@@ -65,10 +65,7 @@ def blog(environ, start_response, args):
         content = []
         for (slug, vars) in index.items():
             vars['slug'] = slug
-            if os.path.exists('var/blog/%s/thumb.jpg' % slug):
-                vars['thumb'] = 'var/blog/%s/thumb.jpg' % slug
-            else:
-                vars['thumb'] = ''
+            vars['thumb'] = os.path.exists('var/blog/%s/thumb.jpg' % slug)
             vars.update(args)
             content.append(render_tpl('blog/index_one', vars))
         args['CONTENT'] = '\n\n'.join(content)
