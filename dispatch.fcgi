@@ -57,7 +57,21 @@ def www_app(environ, start_response):
         return controller(environ, start_response)
     else:
         start_response('404 Not Found', [('Content-Type', 'text/html')])
-        return '<h1>404 Not Found</h1>'
+        # the following string was stolen from lighttpd output
+        return """
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+ <head>
+  <title>404 - Not Found</title>
+ </head>
+ <body>
+  <h1>404 - Not Found</h1>
+ </body>
+
+</html>
+"""
 
 if __name__ == '__main__':
     WSGIServer(www_app).run()
