@@ -52,9 +52,15 @@ def blog(environ, start_response, args):
     index = ConfigObj('var/blog/index.ini', list_values=False)
 
     if 'slug' in args:
-        vars = index[args['slug']]
+        try:
+            vars = index[args['slug']]
+        except KeyError:
+            return err404(start_response)
         vars.update(args)
-        vars['blurb'] = render_file('var/blog/%s/blurb.html' % args['slug'], vars)
+        try:
+            vars['blurb'] = render_file('var/blog/%s/blurb.html' % args['slug'], vars)
+        except IOError:
+            return err404(start_response)
         args['PAGE_TITLE'] = vars['title']
         args['CONTENT'] = render_tpl('blog/one', vars)
 
