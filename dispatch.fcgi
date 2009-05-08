@@ -40,9 +40,8 @@ def render_blurb(blurb, args=None):
         out = string.Template(html)
         return out.substitute(args)
 
-def home(environ, start_response, args):
-    args['PAGE_TITLE'] = 'ongardie.net'
-    args['CONTENT'] = 'Hello World'
+def static(environ, start_response, args):
+    args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
     ok200(start_response)
     return render_tpl('base', args)
 
@@ -76,7 +75,10 @@ def www_app(environ, start_response):
     os.chdir(__file__.rsplit('/', 2)[0])
 
 
-    map = [(r'/', home)]
+    map = [ \
+           (r'/',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
+           (r'/diego/', static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'diego'}),
+          ]
 
     ret = find_controller(map, environ['PATH_INFO'])
     if ret is not None:
