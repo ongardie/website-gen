@@ -9,12 +9,12 @@ def test_app(environ, start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
     return 'Hello World!\n'
 
-def home(environ, start_response):
-    environ['PAGE_TITLE'] = 'ongardie.net'
-    environ['CONTENT'] = 'Hello World'
+def home(environ, start_response, args):
+    args['PAGE_TITLE'] = 'ongardie.net'
+    args['CONTENT'] = 'Hello World'
     start_response('200 OK', [('Content-Type', 'text/html')])
     out = string.Template(open('var/templates/base.html').read())
-    return out.substitute(environ)
+    return out.substitute(args)
 
 
 def find_controller(map, path):
@@ -46,15 +46,14 @@ def www_app(environ, start_response):
     # __file__ is like /var/.../dispatch.fcgi
     os.chdir(__file__.rsplit('/', 2)[0])
 
-    environ['VAR_URL_PREFIX'] = '/var'
 
     map = [(r'/', home)]
 
     ret = find_controller(map, environ['PATH_INFO'])
     if ret is not None:
         (controller, controller_args) = ret
-        environ.update(controller_args)
-        return controller(environ, start_response)
+        controller_args['VAR_URL_PREFIX'] = '/var'
+        return controller(environ, start_response, controller_args)
     else:
         start_response('404 Not Found', [('Content-Type', 'text/html')])
         # the following string was stolen from lighttpd output
