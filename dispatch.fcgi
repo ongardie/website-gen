@@ -5,17 +5,46 @@ import re
 import string
 from flup.server.fcgi import WSGIServer
 
-def test_app(environ, start_response):
+def err404(start_response):
+    start_response('404 Not Found', [('Content-Type', 'text/html')])
+
+    # the following string was stolen from lighttpd output
+    return """
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+ <head>
+  <title>404 - Not Found</title>
+ </head>
+ <body>
+  <h1>404 - Not Found</h1>
+ </body>
+
+</html>
+"""
+
+def ok200(start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return 'Hello World!\n'
+
+def render_tpl(template, args=None):
+    html = open('var/templates/%s.html' % template).read()
+    out = string.Template(html)
+    return out.substitute(args)
+
+def render_blurb(blurb, args=None):
+    html = open('var/blurbs/%s/blurb.html' % blurb).read()
+    if args is None:
+        return html
+    else:
+        out = string.Template(html)
+        return out.substitute(args)
 
 def home(environ, start_response, args):
     args['PAGE_TITLE'] = 'ongardie.net'
     args['CONTENT'] = 'Hello World'
-    start_response('200 OK', [('Content-Type', 'text/html')])
-    out = string.Template(open('var/templates/base.html').read())
-    return out.substitute(args)
-
+    ok200(start_response)
+    return render_tpl('base', args)
 
 def find_controller(map, path):
     for line in map:
@@ -55,22 +84,7 @@ def www_app(environ, start_response):
         controller_args['VAR_URL_PREFIX'] = '/var'
         return controller(environ, start_response, controller_args)
     else:
-        start_response('404 Not Found', [('Content-Type', 'text/html')])
-        # the following string was stolen from lighttpd output
-        return """
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
- <head>
-  <title>404 - Not Found</title>
- </head>
- <body>
-  <h1>404 - Not Found</h1>
- </body>
-
-</html>
-"""
+        return err404(start_response)
 
 if __name__ == '__main__':
     WSGIServer(www_app).run()
