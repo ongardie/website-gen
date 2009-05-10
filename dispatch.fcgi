@@ -154,6 +154,7 @@ def www_app(environ, start_response):
         (controller, controller_args) = ret
         controller_args['VAR_URL_PREFIX'] = '/var'
         controller_args['URL_PREFIX'] = ''
+        controller_args['GOOGLE_ANALYTICS_ACCOUNT'] = 'UA-8777280-1'
         return controller(environ, start_response, controller_args)
     else:
         return err404(start_response)
