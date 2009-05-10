@@ -20,7 +20,7 @@ def article(environ, start_response, args):
     args['CONTENT'] = render_tpl('blog/one', vars)
 
     start_response.ok200()
-    return render_tpl('base', args)
+    return render_tpl('base', args, environ)
 
 def rss(environ, start_response, args):
 
@@ -69,4 +69,4 @@ def index(environ, start_response, args):
     args['CONTENT'] = '\n\n'.join(content)
 
     start_response.ok200()
-    return render_tpl('base', args)
+    return render_tpl('base', args, environ)

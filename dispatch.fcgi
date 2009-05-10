@@ -4,6 +4,7 @@ import os
 import re
 from flup.server.fcgi import WSGIServer
 from beaker.middleware import SessionMiddleware
+from trail import TrailMiddleware
 
 from template import render_file, render_tpl, render_blurb
 
@@ -29,7 +30,7 @@ def ok200(start_response):
 def static(environ, start_response, args):
     args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
     start_response.ok200()
-    return render_tpl('base', args)
+    return render_tpl('base', args, environ)
 
 def find_controller(map, path):
     for line in map:
@@ -87,13 +88,15 @@ if __name__ == '__main__':
     # __file__ is like /file/path/to/src/dispatch.fcgi
     os.chdir(__file__.rsplit('/', 2)[0])
 
+    wsgi_app = TrailMiddleware(www_app)
+
     session_opts = {
         'session.type': 'file',
         'session.data_dir': 'data/',
         'session.lock_dir': 'data/lock/',
         'session.key': 'ongardie.net'
     }
-    wsgi_app = SessionMiddleware(www_app, session_opts)
+    wsgi_app = SessionMiddleware(wsgi_app, session_opts)
     WSGIServer(wsgi_app).run()
 
 # vim: et sw=4 ts=4:
