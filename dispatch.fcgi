@@ -3,11 +3,11 @@
 import os
 import re
 from flup.server.fcgi import WSGIServer
-from mako.template import Template
 
 from datetime import datetime
 from tzinfo_examples import Local
 
+from template import render_file, render_tpl, render_blurb
 
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
@@ -30,20 +30,6 @@ def err404(start_response):
 
 def ok200(start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
-
-def render_file(file, args=None):
-    html = open(file).read()
-    if args is None:
-        return html
-    else:
-        out = Template(html)
-        return out.render(**args)
-
-def render_tpl(template, args=None):
-    return render_file('var/templates/%s.html' % template, args)
-
-def render_blurb(blurb, args=None):
-    return render_file('var/blurbs/%s/blurb.html' % blurb, args)
 
 def static(environ, start_response, args):
     args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
