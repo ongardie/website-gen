@@ -7,9 +7,9 @@ from flup.server.fcgi import WSGIServer
 from template import render_file, render_tpl, render_blurb
 
 def get_base_controller_args():
-    return {'VAR_URL_PREFIX': '/var',
-            'URL_PREFIX': '',
-            'GOOGLE_ANALYTICS_ACCOUNT': 'UA-8777280-1'}
+    from configobj import ConfigObj
+    config = ConfigObj('src/config.ini', list_values=False, file_error=True)
+    return config['controller']
 
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
