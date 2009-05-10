@@ -67,9 +67,9 @@ def www_app(environ, start_response):
     map = [ \
            (r'/',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
            (r'/diego/', static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'diego'}),
-           (r'/blog/',  'blog.blog'),
-           (r'/blog/(?P<slug>[\w-]{1,99})/', 'blog.blog'),
-           (r'/blog/rss.xml', 'blog.blog', {'rss': True}),
+           (r'/blog/',  'blog.index'),
+           (r'/blog/(?P<slug>[\w-]{1,99})/', 'blog.article'),
+           (r'/blog/rss.xml', 'blog.rss'),
           ]
 
     ret = find_controller(map, environ['PATH_INFO'])
