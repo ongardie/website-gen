@@ -47,7 +47,7 @@ def render_blurb(blurb, args=None):
 
 def static(environ, start_response, args):
     args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
-    ok200(start_response)
+    start_response.ok200()
     return render_tpl('base', args)
 
 def datetime_from_localstr(localstr):
@@ -65,12 +65,12 @@ def blog(environ, start_response, args):
         try:
             vars = index[args['slug']]
         except KeyError:
-            return err404(start_response)
+            return start_response.err404()
         vars.update(args)
         try:
             vars['blurb'] = render_file('var/blog/%s/blurb.html' % args['slug'], vars)
         except IOError:
-            return err404(start_response)
+            return start_response.err404()
         args['PAGE_TITLE'] = vars['title']
         args['CONTENT'] = render_tpl('blog/one', vars)
 
@@ -107,7 +107,7 @@ def blog(environ, start_response, args):
             content.append(render_tpl('blog/index_one', vars))
         args['CONTENT'] = '\n\n'.join(content)
 
-    ok200(start_response)
+    start_response.ok200()
     return render_tpl('base', args)
 
 
@@ -136,10 +136,12 @@ def find_controller(map, path):
 
 def www_app(environ, start_response):
 
+    start_response.err404 = lambda: err404(start_response)
+    start_response.ok200  = lambda: ok200(start_response)
+
     # change to root of project
     # __file__ is like /var/.../dispatch.fcgi
     os.chdir(__file__.rsplit('/', 2)[0])
-
 
     map = [ \
            (r'/',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
@@ -157,7 +159,7 @@ def www_app(environ, start_response):
         controller_args['GOOGLE_ANALYTICS_ACCOUNT'] = 'UA-8777280-1'
         return controller(environ, start_response, controller_args)
     else:
-        return err404(start_response)
+        return start_response.err404()
 
 if __name__ == '__main__':
     WSGIServer(www_app).run()
