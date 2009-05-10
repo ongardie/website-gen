@@ -6,8 +6,6 @@ from flup.server.fcgi import WSGIServer
 
 from template import render_file, render_tpl, render_blurb
 
-from blog import blog
-
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
 
@@ -69,9 +67,9 @@ def www_app(environ, start_response):
     map = [ \
            (r'/',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
            (r'/diego/', static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'diego'}),
-           (r'/blog/',  blog),
-           (r'/blog/(?P<slug>[\w-]{1,99})/', blog),
-           (r'/blog/rss.xml', blog, {'rss': True}),
+           (r'/blog/',  'blog.blog'),
+           (r'/blog/(?P<slug>[\w-]{1,99})/', 'blog.blog'),
+           (r'/blog/rss.xml', 'blog.blog', {'rss': True}),
           ]
 
     ret = find_controller(map, environ['PATH_INFO'])
@@ -80,6 +78,12 @@ def www_app(environ, start_response):
         controller_args['VAR_URL_PREFIX'] = '/var'
         controller_args['URL_PREFIX'] = ''
         controller_args['GOOGLE_ANALYTICS_ACCOUNT'] = 'UA-8777280-1'
+
+        if type(controller) == str:
+            module_name, controller_name = controller.rsplit('.', 1)
+            module = __import__(module_name)
+            controller = module.__getattribute__(controller_name)
+
         return controller(environ, start_response, controller_args)
     else:
         return start_response.err404()
