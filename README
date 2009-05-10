@@ -1,4 +1,5 @@
 Dependencies (these are debian package names):
+	python-beaker
 	python-configobj
 	python-flup
 	python-mako

@@ -3,6 +3,7 @@
 import os
 import re
 from flup.server.fcgi import WSGIServer
+from beaker.middleware import SessionMiddleware
 
 from template import render_file, render_tpl, render_blurb
 
@@ -57,10 +58,6 @@ def www_app(environ, start_response):
     start_response.err404 = lambda: err404(start_response)
     start_response.ok200  = lambda: ok200(start_response)
 
-    # change to root of project
-    # __file__ is like /var/.../dispatch.fcgi
-    os.chdir(__file__.rsplit('/', 2)[0])
-
     map = [ \
            (r'/',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
            (r'/diego/', static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'diego'}),
@@ -85,6 +82,18 @@ def www_app(environ, start_response):
         return start_response.err404()
 
 if __name__ == '__main__':
-    WSGIServer(www_app).run()
+
+    # change to root of project
+    # __file__ is like /file/path/to/src/dispatch.fcgi
+    os.chdir(__file__.rsplit('/', 2)[0])
+
+    session_opts = {
+        'session.type': 'file',
+        'session.data_dir': 'data/',
+        'session.lock_dir': 'data/lock/',
+        'session.key': 'ongardie.net'
+    }
+    wsgi_app = SessionMiddleware(www_app, session_opts)
+    WSGIServer(wsgi_app).run()
 
 # vim: et sw=4 ts=4:
