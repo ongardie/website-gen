@@ -6,24 +6,21 @@ from flup.server.fcgi import WSGIServer
 
 from template import render_file, render_tpl, render_blurb
 
+def get_base_controller_args():
+    return {'VAR_URL_PREFIX': '/var',
+            'URL_PREFIX': '',
+            'GOOGLE_ANALYTICS_ACCOUNT': 'UA-8777280-1'}
+
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
 
-    # the following string was stolen from lighttpd output
-    return """
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
- <head>
-  <title>404 - Not Found</title>
- </head>
- <body>
-  <h1>404 - Not Found</h1>
- </body>
-
-</html>
-"""
+    args = get_base_controller_args()
+    args['PAGE_TITLE'] = '404 - Not Found'
+    try:
+        args['CONTENT'] = render_blurb('404')
+    except IOError:
+        args['CONTENT'] = 'Page not found.'
+    return render_tpl('base', args)
 
 def ok200(start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
@@ -74,10 +71,9 @@ def www_app(environ, start_response):
 
     ret = find_controller(map, environ['PATH_INFO'])
     if ret is not None:
-        (controller, controller_args) = ret
-        controller_args['VAR_URL_PREFIX'] = '/var'
-        controller_args['URL_PREFIX'] = ''
-        controller_args['GOOGLE_ANALYTICS_ACCOUNT'] = 'UA-8777280-1'
+        (controller, args) = ret
+        controller_args = get_base_controller_args()
+        controller_args.update(args)
 
         if type(controller) == str:
             module_name, controller_name = controller.rsplit('.', 1)
