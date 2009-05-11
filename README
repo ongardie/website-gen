@@ -1,6 +1,31 @@
-Dependencies (these are debian package names):
-	python-beaker
-	python-configobj
-	python-flup
-	python-mako
-	python-pyrss2gen
+The following libraries are required to run this project:
+
+= Beaker =
+Debian package: python-beaker
+Web site:       http://beaker.groovie.org/
+License:        BSD License
+Purpose:        sessions
+
+= ConfigObj =
+Debian package: python-configobj
+Web site:       http://www.voidspace.org.uk/python/configobj.html
+License:        BSD License
+Purpose:        reading INI files (for config, blog index)
+
+= flup =
+Debian package: python-flup
+Web site:       http://trac.saddi.com/flup
+License:        Simplified BSD License
+Purpose:        FastCGI server for WSGI
+
+= Mako =
+Debian package: python-mako
+Web site:       http://www.makotemplates.org/
+License:        MIT License
+Purpose:        Templating
+
+= PyRSS2Gen =
+Debian package: python-pyrss2gen
+Web site:       http://www.dalkescientific.com/Python/PyRSS2Gen.html
+License:        BSD License
+Purpose:        writing RSS feed
