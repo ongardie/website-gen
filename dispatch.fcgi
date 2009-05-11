@@ -56,7 +56,10 @@ def ok200(start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
 
 def static(environ, start_response, args):
-    args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
+    try:
+        args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
+    except IOError:
+        return start_response.err404()
 
     # update page trail
     environ['trail'].add(args['PAGE_TITLE'])
