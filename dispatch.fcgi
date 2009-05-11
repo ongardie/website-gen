@@ -60,10 +60,10 @@ def www_app(environ, start_response):
     start_response.ok200  = lambda: ok200(start_response)
 
     map = [ \
-           (r'/',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
-           (r'/diego/', static, {'PAGE_TITLE': 'Diego Ongaro', 'CONTENT_BLURB': 'diego'}),
-           (r'/blog/',  'blog.index'),
-           (r'/blog/(?P<slug>[\w-]{1,99})/', 'blog.article'),
+           (r'/?',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
+           (r'/diego/?', static, {'PAGE_TITLE': 'Diego Ongaro', 'CONTENT_BLURB': 'diego'}),
+           (r'/blog/?',  'blog.index'),
+           (r'/blog/(?P<slug>[\w-]{1,99})/?', 'blog.article'),
            (r'/blog/rss.xml', 'blog.rss'),
           ]
 
