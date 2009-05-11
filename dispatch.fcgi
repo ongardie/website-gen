@@ -93,6 +93,7 @@ def www_app(environ, start_response):
            (r'/blog/(?P<slug>[\w-]{1,99})/?', 'blog.article'),
            (r'/blog/rss.xml', 'blog.rss'),
            (r'/misc/?', static, {'PAGE_TITLE': 'Misc', 'CONTENT_BLURB': 'misc'}),
+           (r'/misc/movies/?', static, {'PAGE_TITLE': 'Movie Log', 'CONTENT_BLURB': 'movies'}),
           ]
 
     ret = find_controller(map, environ['PATH_INFO'])
