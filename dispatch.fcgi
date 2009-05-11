@@ -56,8 +56,13 @@ def ok200(start_response):
 
 def static(environ, start_response, args):
     args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
+
+    # update page trail
+    environ['trail'].add(args['PAGE_TITLE'])
+    args['trail'] = environ['trail']
+
     start_response.ok200()
-    return render_tpl('base', args, environ)
+    return render_tpl('base', args)
 
 def find_controller(map, path):
     for line in map:
@@ -123,7 +128,8 @@ if __name__ == '__main__':
         'session.type': 'file',
         'session.data_dir': 'data/',
         'session.lock_dir': 'data/lock/',
-        'session.key': 'ongardie.net'
+        'session.key': 'ongardie',
+        'session.cookie_domain': '.ongardie.net'
     }
     wsgi_app = SessionMiddleware(wsgi_app, session_opts)
     WSGIServer(wsgi_app).run()

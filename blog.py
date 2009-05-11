@@ -46,8 +46,12 @@ def article(environ, start_response, args):
     args['PAGE_TITLE'] = vars['title']
     args['CONTENT'] = render_tpl('blog/one', vars)
 
+    # update page trail
+    environ['trail'].add(args['PAGE_TITLE'])
+    args['trail'] = environ['trail']
+
     start_response.ok200()
-    return render_tpl('base', args, environ)
+    return render_tpl('base', args)
 
 def rss(environ, start_response, args):
 
@@ -95,5 +99,9 @@ def index(environ, start_response, args):
         content.append(render_tpl('blog/index_one', vars))
     args['CONTENT'] = '\n\n'.join(content)
 
+    # update page trail
+    environ['trail'].add(args['PAGE_TITLE'])
+    args['trail'] = environ['trail']
+
     start_response.ok200()
-    return render_tpl('base', args, environ)
+    return render_tpl('base', args)
