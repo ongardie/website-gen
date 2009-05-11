@@ -31,13 +31,14 @@ import os
 import re
 from flup.server.fcgi import WSGIServer
 from beaker.middleware import SessionMiddleware
-from trail import TrailMiddleware
+from configobj import ConfigObj
 
+from trail import TrailMiddleware
 from template import render_file, render_tpl, render_blurb
 
 def get_base_controller_args():
-    from configobj import ConfigObj
-    config = ConfigObj('src/config.ini', list_values=False, file_error=True)
+    config = ConfigObj('src/config.ini',
+                       list_values=False, file_error=True)
     return config['controller']
 
 def err404(start_response):
@@ -92,14 +93,25 @@ def www_app(environ, start_response):
     start_response.ok200  = lambda: ok200(start_response)
 
     map = [ \
-           (r'/?',       static, {'PAGE_TITLE': 'ongardie.net', 'CONTENT_BLURB': 'home'}),
-           (r'/diego/?', static, {'PAGE_TITLE': 'Diego Ongaro', 'CONTENT_BLURB': 'diego'}),
            (r'/blog/?',  'blog.index'),
            (r'/blog/(?P<slug>[\w-]{1,99})/?', 'blog.article'),
            (r'/blog/rss.xml', 'blog.rss'),
-           (r'/misc/?', static, {'PAGE_TITLE': 'Misc', 'CONTENT_BLURB': 'misc'}),
-           (r'/misc/movies/?', static, {'PAGE_TITLE': 'Movie Log', 'CONTENT_BLURB': 'movies'}),
           ]
+
+    try:
+        staticpages = ConfigObj('var/staticpages.ini',
+                                list_values=True, file_error=True)
+    except IOError:
+        staticpages = {}
+    for (blurb, vars) in staticpages.items():
+        if isinstance(vars['url'], list):
+            urls = vars['url']
+        else:
+            urls = [vars['url']]
+        for url in urls:
+            map.append((url, static,
+                        {'PAGE_TITLE': vars['title'],
+                         'CONTENT_BLURB': blurb}))
 
     ret = find_controller(map, environ['PATH_INFO'])
     if ret is not None:
