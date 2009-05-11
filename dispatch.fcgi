@@ -127,7 +127,10 @@ def www_app(environ, start_response):
             module = __import__(module_name)
             controller = module.__getattribute__(controller_name)
 
-        return controller(environ, start_response, controller_args)
+        out = controller(environ, start_response, controller_args)
+        if isinstance(out, str):
+            out = [out]
+        return out
     else:
         return start_response.err404()
 
