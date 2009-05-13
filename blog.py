@@ -89,16 +89,20 @@ def index(environ, start_response, args):
 
     index = read_index()
 
-    args['PAGE_TITLE'] = 'Blog Index'
-
-    content = []
+    articles = []
     for (slug, vars) in index.items():
-        vars.update(args)
         vars['slug'] = slug
         vars['thumb'] = os.path.exists('var/blog/%s/thumb.jpg' % slug)
-        vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, vars)
-        content.append(render_tpl('blog/index_one', vars))
-    args['CONTENT'] = '\n\n'.join(content)
+
+        blurb_args = vars.copy()
+        blurb_args.update(args)
+        vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, blurb_args)
+
+        articles.append(vars)
+
+    args['PAGE_TITLE'] = 'Blog Index'
+    args['articles'] = articles
+    args['CONTENT'] = render_tpl('blog/index', args)
 
     # update page trail
     environ['trail'].add(args['PAGE_TITLE'])
