@@ -93,9 +93,10 @@ def index(environ, start_response, args):
 
     content = []
     for (slug, vars) in index.items():
+        vars.update(args)
         vars['slug'] = slug
         vars['thumb'] = os.path.exists('var/blog/%s/thumb.jpg' % slug)
-        vars.update(args)
+        vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, vars)
         content.append(render_tpl('blog/index_one', vars))
     args['CONTENT'] = '\n\n'.join(content)
 
