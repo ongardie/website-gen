@@ -36,10 +36,17 @@ from configobj import ConfigObj
 from trail import TrailMiddleware
 from template import render_file, render_tpl, render_blurb
 
+def get_site_config():
+    global _config
+    try:
+        return _config
+    except NameError:
+        _config = ConfigObj('src/config.ini',
+                            list_values=False, file_error=True)
+        return _config
+
 def get_base_controller_args():
-    config = ConfigObj('src/config.ini',
-                       list_values=False, file_error=True)
-    return config['controller']
+    return get_site_config()['controller'].copy()
 
 def err404(start_response):
     start_response('404 Not Found', [('Content-Type', 'text/html')])
@@ -68,7 +75,12 @@ def static(environ, start_response, args):
     start_response.ok200()
     return render_tpl('base', args)
 
-def find_controller(map, path):
+def find_controller(map, url_prefix, path):
+
+    if not path.startswith(url_prefix):
+        return None
+    path = path[len(url_prefix):]
+
     for line in map:
         pattern = line[0]
         controller = line[1]
@@ -91,6 +103,8 @@ def find_controller(map, path):
     return None
 
 def www_app(environ, start_response):
+
+    config = get_site_config()
 
     start_response.err404 = lambda: err404(start_response)
     start_response.ok200  = lambda: ok200(start_response)
@@ -116,7 +130,7 @@ def www_app(environ, start_response):
                         {'PAGE_TITLE': vars['title'],
                          'CONTENT_BLURB': blurb}))
 
-    ret = find_controller(map, environ['PATH_INFO'])
+    ret = find_controller(map, config['controller']['URL_PREFIX'], environ['PATH_INFO'])
     if ret is not None:
         (controller, args) = ret
         controller_args = get_base_controller_args()
