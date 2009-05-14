@@ -64,7 +64,8 @@ def ok200(start_response):
 
 def static(environ, start_response, args):
     try:
-        args['CONTENT'] = render_blurb(args['CONTENT_BLURB'])
+        args['CONTENT'] = render_blurb(args['CONTENT_BLURB'],
+                                       get_base_controller_args())
     except IOError:
         return start_response.err404()
 
