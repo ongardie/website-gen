@@ -155,14 +155,16 @@ if __name__ == '__main__':
     # __file__ is like /file/path/to/src/dispatch.fcgi
     os.chdir(__file__.rsplit('/', 2)[0])
 
+    config = get_site_config()
+
     wsgi_app = TrailMiddleware(www_app)
 
     session_opts = {
         'session.type': 'file',
         'session.data_dir': 'data/',
         'session.lock_dir': 'data/lock/',
-        'session.key': 'ongardie',
-        'session.cookie_domain': '.ongardie.net'
+        'session.key': config['session']['key'],
+        'session.cookie_domain': config['session']['cookie_domain'],
     }
     wsgi_app = SessionMiddleware(wsgi_app, session_opts)
     WSGIServer(wsgi_app).run()
