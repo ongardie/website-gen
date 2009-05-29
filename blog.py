@@ -96,7 +96,10 @@ def index(environ, start_response, args):
 
         blurb_args = vars.copy()
         blurb_args.update(args)
-        vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, blurb_args)
+        try:
+            vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, blurb_args)
+        except IOError:
+            continue
 
         articles.append(vars)
 
