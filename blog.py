@@ -38,6 +38,10 @@ def article(environ, start_response, args):
         vars = index[args['slug']]
     except KeyError:
         return start_response.err404()
+    if 'tags' in vars:
+        vars['tags'] = vars['tags'].split()
+    else:
+        vars['tags'] = []
     vars.update(args)
     try:
         vars['blurb'] = render_file('var/blog/%s/blurb.html' % args['slug'], vars)
@@ -93,6 +97,11 @@ def index(environ, start_response, args):
     for (slug, vars) in index.items():
         vars['slug'] = slug
         vars['thumb'] = os.path.exists('var/blog/%s/thumb.jpg' % slug)
+
+        if 'tags' in vars:
+            vars['tags'] = vars['tags'].split()
+        else:
+            vars['tags'] = []
 
         blurb_args = vars.copy()
         blurb_args.update(args)
