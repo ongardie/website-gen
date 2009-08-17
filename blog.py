@@ -72,6 +72,14 @@ def rss(environ, start_response, args):
 
     items = []
     for (slug, vars) in index.items():
+
+        if 'tags' in vars:
+            vars['tags'] = vars['tags'].split()
+        else:
+            vars['tags'] = []
+        if 'tag' in args and args['tag'] not in vars['tags']:
+                continue
+
         vars.update(args)
         items.append(PyRSS2Gen.RSSItem(
            title = vars['title'],
@@ -79,12 +87,20 @@ def rss(environ, start_response, args):
            description = render_file('var/blog/%s/blurb.html' % slug, vars),
            guid = PyRSS2Gen.Guid('http://ongardie.net/blog/%s/' % slug),
            pubDate = datetime_from_localstr(vars['date'])))
-    rss = PyRSS2Gen.RSS2(
-        title = "ongardie.net",
-        link = "http://ongardie.net/blog/",
-        description = "ongardie.net Blog",
-        lastBuildDate = datetime.now(),
-        items = items)
+    if 'tag' in args:
+        rss = PyRSS2Gen.RSS2(
+            title = "ongardie.net: %s" % args['tag'],
+            link = "http://ongardie.net/blog/+%s/" % args['tag'],
+            description = "ongardie.net Blog: %s Tag" % args['tag'],
+            lastBuildDate = datetime.now(),
+            items = items)
+    else:
+        rss = PyRSS2Gen.RSS2(
+            title = "ongardie.net",
+            link = "http://ongardie.net/blog/",
+            description = "ongardie.net Blog",
+            lastBuildDate = datetime.now(),
+            items = items)
     start_response('200 OK', [('Content-Type', 'text/xml; charset="utf-8"')])
     return rss.to_xml(encoding='utf-8')
 

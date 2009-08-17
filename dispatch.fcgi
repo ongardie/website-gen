@@ -114,6 +114,7 @@ def www_app(environ, start_response):
            (r'/blog/?',  'blog.index'),
            (r'/blog/\+(?P<tag>[\w-]{1,99})/?', 'blog.index'),
            (r'/blog/(?P<slug>[\w-]{1,99})/?', 'blog.article'),
+           (r'/blog/\+(?P<tag>[\w-]{1,99})/rss.xml', 'blog.rss'),
            (r'/blog/rss.xml', 'blog.rss'),
           ]
 
