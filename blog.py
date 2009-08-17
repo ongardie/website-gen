@@ -81,8 +81,8 @@ def rss(environ, start_response, args):
         description = "ongardie.net Blog",
         lastBuildDate = datetime.now(),
         items = items)
-    start_response('200 OK', [('Content-Type', 'text/xml')])
-    return rss.to_xml()
+    start_response('200 OK', [('Content-Type', 'text/xml; charset="utf-8"')])
+    return rss.to_xml(encoding='utf-8')
 
 def index(environ, start_response, args):
     import os
