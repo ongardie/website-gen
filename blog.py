@@ -68,6 +68,9 @@ def rss(environ, start_response, args):
         date = date - Local.utcoffset(date)
         return date
 
+    args['URL_PREFIX'] = args['FULL_URL_PREFIX']
+    args['VAR_URL_PREFIX'] = args['FULL_VAR_URL_PREFIX']
+
     index = read_index()
 
     items = []
@@ -83,21 +86,21 @@ def rss(environ, start_response, args):
         vars.update(args)
         items.append(PyRSS2Gen.RSSItem(
            title = vars['title'],
-           link = 'http://ongardie.net/blog/%s/' % slug,
+           link = args['FULL_URL_PREFIX'] + '/blog/%s/' % slug,
            description = render_file('var/blog/%s/blurb.html' % slug, vars),
-           guid = PyRSS2Gen.Guid('http://ongardie.net/blog/%s/' % slug),
+           guid = PyRSS2Gen.Guid(args['URL_PREFIX'] + '/blog/%s/' % slug),
            pubDate = datetime_from_localstr(vars['date'])))
     if 'tag' in args:
         rss = PyRSS2Gen.RSS2(
             title = "ongardie.net: %s" % args['tag'],
-            link = "http://ongardie.net/blog/+%s/" % args['tag'],
+            link = args['FULL_URL_PREFIX'] + "/blog/+%s/" % args['tag'],
             description = "ongardie.net Blog: %s Tag" % args['tag'],
             lastBuildDate = datetime.now(),
             items = items)
     else:
         rss = PyRSS2Gen.RSS2(
             title = "ongardie.net",
-            link = "http://ongardie.net/blog/",
+            link = args['FULL_URL_PREFIX'] + "/blog/",
             description = "ongardie.net Blog",
             lastBuildDate = datetime.now(),
             items = items)

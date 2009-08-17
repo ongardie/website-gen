@@ -43,6 +43,11 @@ def get_site_config():
     except NameError:
         _config = ConfigObj('src/config.ini',
                             list_values=False, file_error=True)
+        controller = _config['controller']
+        controller['FULL_URL_PREFIX']     = controller['URL_TILL_PATH'] + controller['SHORT_URL_PREFIX']
+        controller['FULL_VAR_URL_PREFIX'] = controller['URL_TILL_PATH'] + controller['SHORT_VAR_URL_PREFIX']
+        controller['URL_PREFIX']          = controller['SHORT_URL_PREFIX']
+        controller['VAR_URL_PREFIX']      = controller['SHORT_VAR_URL_PREFIX']
         return _config
 
 def get_base_controller_args():
