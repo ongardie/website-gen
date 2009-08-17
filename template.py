@@ -32,7 +32,7 @@ def render_file(file, args=None):
     if args is None:
         return html
     else:
-        out = Template(html)
+        out = Template(html, disable_unicode=True)
         return out.render(**args)
 
 def render_tpl(template, args=None):
