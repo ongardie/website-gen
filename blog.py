@@ -103,6 +103,9 @@ def index(environ, start_response, args):
         else:
             vars['tags'] = []
 
+        if 'tag' in args and args['tag'] not in vars['tags']:
+                continue
+
         blurb_args = vars.copy()
         blurb_args.update(args)
         try:
@@ -112,7 +115,10 @@ def index(environ, start_response, args):
 
         articles.append(vars)
 
-    args['PAGE_TITLE'] = 'Blog Index'
+    if 'tag' in args:
+        args['PAGE_TITLE'] = 'Blog: %s Tag' % args['tag']
+    else:
+        args['PAGE_TITLE'] = 'Blog Index'
     args['articles'] = articles
     args['CONTENT'] = render_tpl('blog/index', args)
 
