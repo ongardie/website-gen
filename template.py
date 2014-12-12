@@ -1,4 +1,4 @@
-# Copyright (c) 2009, Diego Ongaro <ongardie@gmail.com>
+# Copyright (c) 2009-2014 Diego Ongaro <ongardie@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from mako.template import Template
+from markdown import markdown
 
 def render_file(file, args=None):
     html = open(file).read()
@@ -40,3 +41,9 @@ def render_tpl(template, args=None):
 
 def render_blurb(blurb, args=None):
     return render_file('var/blurbs/%s/blurb.html' % blurb, args)
+
+def render_markdown(file, args=None):
+    md = open(file).read()
+    html = markdown(md)
+    out = Template(html, disable_unicode=False)
+    return out.render(**args)

@@ -1,4 +1,4 @@
-# Copyright (c) 2009, Diego Ongaro <ongardie@gmail.com>
+# Copyright (c) 2009-2014 Diego Ongaro <ongardie@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from template import render_file, render_tpl, render_blurb
+from template import render_file, render_tpl, render_blurb, render_markdown
 
 def read_index():
     from configobj import ConfigObj
@@ -45,6 +45,8 @@ def article(environ, start_response, args):
     vars.update(args)
     try:
         vars['blurb'] = render_file('var/blog/%s/blurb.html' % args['slug'], vars)
+    except IOError:
+        vars['blurb'] = render_markdown('var/blog/%s/blurb.md' % args['slug'], vars)
     except IOError:
         return start_response.err404()
     args['PAGE_TITLE'] = vars['title']
@@ -129,6 +131,8 @@ def index(environ, start_response, args):
         blurb_args.update(args)
         try:
             vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, blurb_args)
+        except IOError:
+            vars['blurb'] = render_markdown('var/blog/%s/blurb.md' % slug, blurb_args)
         except IOError:
             continue
 
