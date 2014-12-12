@@ -27,6 +27,13 @@
 
 from template import render_file, render_tpl, render_blurb, render_markdown
 
+def render_blog(slug, args):
+    try:
+        return render_file('var/blog/%s/blurb.html' % slug, args)
+    except IOError:
+        return render_markdown('var/blog/%s/blurb.md' % slug, args)
+
+
 def read_index():
     from configobj import ConfigObj
     return ConfigObj('var/blog/index.ini', list_values=False)
@@ -44,9 +51,7 @@ def article(environ, start_response, args):
         vars['tags'] = []
     vars.update(args)
     try:
-        vars['blurb'] = render_file('var/blog/%s/blurb.html' % args['slug'], vars)
-    except IOError:
-        vars['blurb'] = render_markdown('var/blog/%s/blurb.md' % args['slug'], vars)
+        vars['blurb'] = render_blog(args['slug'], vars)
     except IOError:
         return start_response.err404()
     args['PAGE_TITLE'] = vars['title']
@@ -89,7 +94,7 @@ def rss(environ, start_response, args):
         items.append(PyRSS2Gen.RSSItem(
            title = vars['title'],
            link = args['FULL_URL_PREFIX'] + '/blog/%s/' % slug,
-           description = render_file('var/blog/%s/blurb.html' % slug, vars),
+           description = render_blog(slug, vars),
            guid = PyRSS2Gen.Guid(args['URL_PREFIX'] + '/blog/%s/' % slug),
            pubDate = datetime_from_localstr(vars['date'])))
     if 'tag' in args:
@@ -130,9 +135,7 @@ def index(environ, start_response, args):
         blurb_args = vars.copy()
         blurb_args.update(args)
         try:
-            vars['blurb'] = render_file('var/blog/%s/blurb.html' % slug, blurb_args)
-        except IOError:
-            vars['blurb'] = render_markdown('var/blog/%s/blurb.md' % slug, blurb_args)
+            vars['blurb'] = render_blog(slug, blurb_args)
         except IOError:
             continue
 
