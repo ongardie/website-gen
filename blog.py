@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2014 Diego Ongaro <ongardie@gmail.com>
+# Copyright (c) 2009-2015 Diego Ongaro <ongardie@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,23 @@
 
 from template import render_file, render_tpl, render_blurb, render_markdown
 
+import re
+
 def render_blog(slug, args):
     try:
-        return render_file('var/blog/%s/blurb.html' % slug, args)
+        blurb = render_file('var/blog/%s/blurb.html' % slug, args)
     except IOError:
-        return render_markdown('var/blog/%s/blurb.md' % slug, args)
-
+        blurb = render_markdown('var/blog/%s/blurb.md' % slug, args)
+    m = re.match('^(.*?)<hr( /)?>(.*)$', blurb, flags=re.DOTALL)
+    if m is None:
+        return {
+            'blurb': blurb,
+        }
+    else:
+        return {
+            'blurb': m.group(1) + m.group(3),
+            'summary': m.group(1),
+        }
 
 def read_index():
     from configobj import ConfigObj
@@ -51,7 +62,7 @@ def article(environ, start_response, args):
         vars['tags'] = []
     vars.update(args)
     try:
-        vars['blurb'] = render_blog(args['slug'], vars)
+        vars['blurb'] = render_blog(args['slug'], vars)['blurb']
     except IOError:
         return start_response.err404()
     args['PAGE_TITLE'] = vars['title']
@@ -94,7 +105,7 @@ def rss(environ, start_response, args):
         items.append(PyRSS2Gen.RSSItem(
            title = vars['title'],
            link = args['FULL_URL_PREFIX'] + '/blog/%s/' % slug,
-           description = render_blog(slug, vars),
+           description = render_blog(slug, vars)['blurb'],
            guid = PyRSS2Gen.Guid(args['URL_PREFIX'] + '/blog/%s/' % slug),
            pubDate = datetime_from_localstr(vars['date'])))
     if 'tag' in args:
@@ -135,7 +146,10 @@ def index(environ, start_response, args):
         blurb_args = vars.copy()
         blurb_args.update(args)
         try:
-            vars['blurb'] = render_blog(slug, blurb_args)
+            s = render_blog(slug, blurb_args)
+            vars['blurb'] = s['blurb']
+            if 'summary' in s:
+                vars['summary'] = s['summary']
         except IOError:
             continue
 
