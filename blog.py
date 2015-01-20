@@ -103,7 +103,7 @@ def rss(environ, start_response, args):
 
         vars.update(args)
         items.append(PyRSS2Gen.RSSItem(
-           title = vars['title'],
+           title = re.sub('<wbr( /)?>', '', vars['title']),
            link = args['FULL_URL_PREFIX'] + '/blog/%s/' % slug,
            description = render_blog(slug, vars)['blurb'],
            guid = PyRSS2Gen.Guid(args['URL_PREFIX'] + '/blog/%s/' % slug),
