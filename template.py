@@ -1,49 +1,13 @@
-# Copyright (c) 2009-2014 Diego Ongaro <ongardie@gmail.com>
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# Copyright (c) 2009-2020, Diego Ongaro <ongardie@gmail.com>
+# Licensed under the BSD 2-Clause License.
 
 from mako.template import Template
 from markdown import markdown
 
-def render_file(file, args=None):
-    html = open(file).read()
-    if args is None:
-        return html
-    else:
-        out = Template(html, disable_unicode=True)
-        return out.render(**args)
 
-def render_tpl(template, args=None):
-    return render_file('var/templates/%s.html' % template, args)
-
-def render_blurb(blurb, args=None):
-    return render_file('var/blurbs/%s/blurb.html' % blurb, args)
-
-def render_markdown(file, args=None):
-    md = open(file).read()
-    html = markdown(md)
-    out = Template(html, disable_unicode=False)
+def render_file(file, args):
+    body = open(file).read()
+    if str(file).endswith('.md'):
+        body = markdown(body)
+    out = Template(body, strict_undefined=True)
     return out.render(**args)

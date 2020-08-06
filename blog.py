@@ -1,39 +1,31 @@
-# Copyright (c) 2009-2015 Diego Ongaro <ongardie@gmail.com>
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# Copyright (c) 2009-2020, Diego Ongaro <ongardie@gmail.com>
+# Licensed under the BSD 2-Clause License.
 
-from template import render_file, render_tpl, render_blurb, render_markdown
-
+from configparser import ConfigParser
+from datetime import datetime, timezone
+import os
+from pathlib import Path
+import PyRSS2Gen
 import re
 
-def render_blog(slug, args):
+from template import render_file
+
+
+def augment_config(config):
+    for slug, values in config['blog'].items():
+        values['slug'] = slug
+        if 'tags' in values:
+            values['tags'] = values['tags'].split()
+        else:
+            values['tags'] = []
+
+
+def render_article(config, slug, args):
+    dir = Path(config['env']['var'], 'blog', slug)
     try:
-        blurb = render_file('var/blog/%s/blurb.html' % slug, args)
+        blurb = render_file(dir.joinpath('blurb.html'), args)
     except IOError:
-        blurb = render_markdown('var/blog/%s/blurb.md' % slug, args)
+        blurb = render_file(dir.joinpath('blurb.md'), args)
     m = re.match('^(.*?)<hr( /)?>(.*)$', blurb, flags=re.DOTALL)
     if m is None:
         return {
@@ -45,126 +37,60 @@ def render_blog(slug, args):
             'summary': m.group(1),
         }
 
-def read_index():
-    from configobj import ConfigObj
-    return ConfigObj('var/blog/index.ini', list_values=False)
 
-def article(environ, start_response, args):
-    index = read_index()
+def article(config, slug):
+    args = config['blog'][slug].copy()
+    args.update(config['controller'])
+    args['blurb'] = render_article(config, slug, args)['blurb']
+    args['PAGE_TITLE'] = args['title']
+    args['CONTENT'] = render_file(
+        Path(config['env']['var'], 'templates', 'blog', 'one.html'),
+        args)
+    return render_file(Path(config['env']['var'], 'templates', 'base.html'), args)
 
-    try:
-        vars = index[args['slug']]
-    except KeyError:
-        return start_response.err404()
-    if 'tags' in vars:
-        vars['tags'] = vars['tags'].split()
-    else:
-        vars['tags'] = []
-    vars.update(args)
-    try:
-        vars['blurb'] = render_blog(args['slug'], vars)['blurb']
-    except IOError:
-        return start_response.err404()
-    args['PAGE_TITLE'] = vars['title']
-    args['CONTENT'] = render_tpl('blog/one', vars)
 
-    # update page trail
-    environ['trail'].add(args['PAGE_TITLE'])
-    args['trail'] = environ['trail']
-
-    start_response.ok200()
-    return render_tpl('base', args)
-
-def rss(environ, start_response, args):
-
-    import PyRSS2Gen
-    from datetime import datetime
-    from tzinfo_examples import Local
-
-    def datetime_from_localstr(localstr):
-        date = datetime.strptime(localstr, '%Y-%m-%d %H:%M')
-        date = date - Local.utcoffset(date)
-        return date
-
-    args['URL_PREFIX'] = args['FULL_URL_PREFIX']
-    args['VAR_URL_PREFIX'] = args['FULL_VAR_URL_PREFIX']
-
-    index = read_index()
+def rss(config):
+    controller = config['controller'].copy()
+    controller['URL_PREFIX'] = controller['FULL_URL_PREFIX']
+    controller['VAR_URL_PREFIX'] = controller['FULL_VAR_URL_PREFIX']
 
     items = []
-    for (slug, vars) in index.items():
-
-        if 'tags' in vars:
-            vars['tags'] = vars['tags'].split()
-        else:
-            vars['tags'] = []
-        if 'tag' in args and args['tag'] not in vars['tags']:
-                continue
-
-        vars.update(args)
+    for slug in config['blog']:
+        args = config['blog'][slug].copy()
+        args.update(controller)
         items.append(PyRSS2Gen.RSSItem(
-           title = re.sub('<wbr( /)?>', '', vars['title']),
-           link = args['FULL_URL_PREFIX'] + '/blog/%s/' % slug,
-           description = render_blog(slug, vars)['blurb'],
-           guid = PyRSS2Gen.Guid(args['URL_PREFIX'] + '/blog/%s/' % slug),
-           pubDate = datetime_from_localstr(vars['date'])))
-    if 'tag' in args:
-        rss = PyRSS2Gen.RSS2(
-            title = "ongardie.net: %s" % args['tag'],
-            link = args['FULL_URL_PREFIX'] + "/blog/+%s/" % args['tag'],
-            description = "ongardie.net Blog: %s Tag" % args['tag'],
-            lastBuildDate = datetime.now(),
-            items = items)
-    else:
-        rss = PyRSS2Gen.RSS2(
-            title = "ongardie.net",
-            link = args['FULL_URL_PREFIX'] + "/blog/",
-            description = "ongardie.net Blog",
-            lastBuildDate = datetime.now(),
-            items = items)
-    start_response('200 OK', [('Content-Type', 'text/xml; charset="utf-8"')])
+            title=re.sub('<wbr( /)?>', '', args['title']),
+            link=args['FULL_URL_PREFIX'] + f'/blog/{slug}/',
+            description=render_article(config, slug, args)['blurb'],
+            guid=PyRSS2Gen.Guid(args['URL_PREFIX'] + f'/blog/{slug}/'),
+            pubDate=datetime.fromisoformat(args['date']).astimezone(timezone.utc)))
+
+    rss = PyRSS2Gen.RSS2(
+        title='ongardie.net',
+        link=controller['FULL_URL_PREFIX'] + '/blog/',
+        description="Diego Ongaro's Blog",
+        lastBuildDate=datetime.now(),
+        items=items)
     return rss.to_xml(encoding='utf-8')
 
-def index(environ, start_response, args):
-    import os
 
-    index = read_index()
-
+def index(config, *, tag=None):
     articles = []
-    for (slug, vars) in index.items():
-        vars['slug'] = slug
-        vars['thumb'] = os.path.exists('var/blog/%s/thumb.jpg' % slug)
-
-        if 'tags' in vars:
-            vars['tags'] = vars['tags'].split()
-        else:
-            vars['tags'] = []
-
-        if 'tag' in args and args['tag'] not in vars['tags']:
-                continue
-
-        blurb_args = vars.copy()
-        blurb_args.update(args)
-        try:
-            s = render_blog(slug, blurb_args)
-            vars['blurb'] = s['blurb']
-            if 'summary' in s:
-                vars['summary'] = s['summary']
-        except IOError:
+    for slug in config['blog']:
+        article = config['blog'][slug].copy()
+        if tag is not None and tag not in article['tags']:
             continue
+        article_args = article.copy()
+        article_args.update(config['controller'])
+        article.update(render_article(config, slug, article_args))
+        articles.append(article)
 
-        articles.append(vars)
-
-    if 'tag' in args:
-        args['PAGE_TITLE'] = 'Blog: %s Tag' % args['tag']
-    else:
+    args = config['controller'].copy()
+    if tag is None:
         args['PAGE_TITLE'] = 'Blog Index'
+    else:
+        args['PAGE_TITLE'] = f'Blog: {tag} Tag'
     args['articles'] = articles
-    args['CONTENT'] = render_tpl('blog/index', args)
-
-    # update page trail
-    environ['trail'].add(args['PAGE_TITLE'])
-    args['trail'] = environ['trail']
-
-    start_response.ok200()
-    return render_tpl('base', args)
+    args['CONTENT'] = render_file(
+        Path(config['env']['var'], 'templates', 'blog', 'index.html'), args)
+    return render_file(Path(config['env']['var'], 'templates', 'base.html'), args)
