@@ -54,8 +54,6 @@ def main(env):
     config.update(read_ini(config['env']['config.ini']))
     config['controller']['VAR_URL_PREFIX'] = config['controller']['URL_PREFIX'] + '/var'
     config['controller']['FULL_VAR_URL_PREFIX'] = config['controller']['FULL_URL_PREFIX'] + '/var'
-    if 'GOOGLE_ANALYTICS_ACCOUNT' not in config['controller']:
-        config['controller']['GOOGLE_ANALYTICS_ACCOUNT'] = None
     config['static'] = read_ini(Path(config['env']['var'], 'staticpages.ini'))
     config['blog'] = read_ini(Path(config['env']['var'], 'blog', 'index.ini'))
     blog.augment_config(config)
