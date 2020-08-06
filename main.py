@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2009-2020, Diego Ongaro <ongardie@gmail.com>
+# Copyright (c) 2009-2020, Diego Ongaro.
 # Licensed under the BSD 2-Clause License.
 
 import argparse
