@@ -1,3 +1,4 @@
 Mako
 Markdown
+Pygments
 PyRSS2Gen
