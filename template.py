@@ -8,6 +8,6 @@ from markdown import markdown
 def render_file(file, args):
     body = open(file).read()
     if str(file).endswith('.md'):
-        body = markdown(body)
+        body = markdown(body, extensions=['fenced_code'])
     out = Template(body, strict_undefined=True)
     return out.render(**args)
