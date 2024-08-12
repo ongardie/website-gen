@@ -5,6 +5,7 @@
 
 import argparse
 import configparser
+import csv
 import os
 from pathlib import Path
 import re
@@ -71,9 +72,23 @@ def main(env):
         args = {
             'PAGE_TITLE': values['title'],
         }
+        try:
+            with open(
+                Path(config['env']['var'], 'blurbs', slug, 'data.csv'),
+                newline=''
+            ) as csvfile:
+                args['CSV'] = list(csv.DictReader(csvfile))
+        except IOError:
+            pass
         args.update(config['controller'])
-        args['CONTENT'] = render_file(
-            Path(config['env']['var'], 'blurbs', slug, 'blurb.html'), args)
+
+        try:
+            args['CONTENT'] = render_file(
+                Path(config['env']['var'], 'blurbs', slug, 'blurb.html'), args)
+        except IOError:
+            args['CONTENT'] = render_file(
+                Path(config['env']['var'], 'blurbs', slug, 'blurb.md'), args)
+
         write(Path(config['env']['output'],
                    *values['url'].split('/'),
                    'index.html'),
