@@ -65,9 +65,19 @@ def main(env):
     os.makedirs(config['env']['output'])
     shutil.copytree(config['env']['var'],
                     Path(config['env']['output'], 'var'),
-                    ignore=shutil.ignore_patterns('.*'))
+                    ignore=shutil.ignore_patterns('.*', '*.html', '*.ini', '*.md', 'data.csv'))
 
-    # Write static pages
+    # Remove empty directories in var resulting from ignored files. The full
+    # directory walk happens before any deletion, so already deleted dirs are
+    # tracked and ignored.
+    deleted_dirs = set()
+    for root, dirs, files in Path(config['env']['output'], 'var').walk(top_down=False):
+        dirs = {root.joinpath(dir) for dir in dirs} - deleted_dirs
+        if not dirs and not files:
+            deleted_dirs.add(root)
+            root.rmdir()
+
+    # Write static pages.
     for slug, values in config['static'].items():
         args = {
             'PAGE_TITLE': values['title'],
@@ -95,7 +105,7 @@ def main(env):
               render_file(Path(config['env']['var'], 'templates', 'base.html'),
                           args))
 
-    # Write blog pages
+    # Write blog pages.
     write(Path(config['env']['output'], 'blog', 'index.html'),
           blog.index(config))
     write(Path(config['env']['output'], 'blog', 'rss.xml'),

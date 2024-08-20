@@ -25,8 +25,7 @@ alternatives like [Hugo](https://gohugo.io/) and
     FULL_URL_PREFIX = http://localhost:8000
     ```
 
-3. Create a "var" directory with templates and content. See
-   <https://github.com/ongardie/ongardie.net-content> for an example.
+3. Create a "var" directory with templates and content.
 
 4. Run the static site generator:
 
