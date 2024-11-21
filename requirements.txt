@@ -1,4 +1,4 @@
 Mako
-Markdown
-Pygments
 PyRSS2Gen
+Pygments
+markdown-it-py[plugins]

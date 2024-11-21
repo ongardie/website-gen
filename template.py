@@ -2,9 +2,8 @@
 # Licensed under the BSD 2-Clause License.
 
 from mako.template import Template
-from markdown import markdown
-from markdown.extensions.fenced_code import FencedCodeExtension
-from markdown.extensions.codehilite import CodeHiliteExtension
+from markdown_it import MarkdownIt
+import pygments
 import re
 
 
@@ -22,22 +21,30 @@ def md_preprocessor(input):
     return "\n".join(output)
 
 
+def highlighter(content, lang, attrs):
+    if lang == "":
+        return content
+    lexer = pygments.lexers.get_lexer_by_name(lang)
+    formatter = pygments.formatters.HtmlFormatter(classprefix="hl-", nowrap=True)
+    return pygments.highlight(content, lexer, formatter)
+
+
 def render_file(file, args):
     body = open(file).read()
     if str(file).endswith(".md"):
         out = Template(
             body, preprocessor=md_preprocessor, strict_undefined=True
         ).render(**args)
-        return markdown(
-            out,
-            extensions=[
-                CodeHiliteExtension(
-                    guess_lang=False,
-                    linenums=False,
-                    noclasses=True,
-                ),
-                FencedCodeExtension(),
-            ],
+
+        return (
+            MarkdownIt(
+                "commonmark",
+                {
+                    "highlight": highlighter,
+                },
+            )
+            .enable(["table", "strikethrough"])
+            .render(out)
         )
     else:
         return Template(body, strict_undefined=True).render(**args)
