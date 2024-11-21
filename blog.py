@@ -2,7 +2,7 @@
 # Licensed under the BSD 2-Clause License.
 
 from configparser import ConfigParser
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import os
 from pathlib import Path
 import PyRSS2Gen
@@ -53,26 +53,43 @@ def rss(config):
     controller = config["controller"].copy()
     controller["URL_PREFIX"] = controller["FULL_URL_PREFIX"]
     controller["VAR_URL_PREFIX"] = controller["FULL_VAR_URL_PREFIX"]
+    now = datetime.now(timezone.utc)
 
     items = []
     for slug in config["blog"]:
-        args = config["blog"][slug].copy()
-        args.update(controller)
+        article = config["blog"][slug].copy()
+        article_args = article.copy()
+        article_args.update(controller)
+        article.update(render_article(config, slug, article_args))
+        date = datetime.fromisoformat(article["date"]).astimezone(timezone.utc)
+
+        if "summary" in article and (
+            now - date > timedelta(days=5 * 365) or len(items) > 10
+        ):
+            description = f"""{article['summary']}
+                <p><a href="{controller['FULL_URL_PREFIX']}/blog/{slug}/">Continue reading full article</a></p>
+            """
+        else:
+            description = article["blurb"]
+
         items.append(
             PyRSS2Gen.RSSItem(
-                title=re.sub("<wbr( /)?>", "", args["title"]),
-                link=args["FULL_URL_PREFIX"] + f"/blog/{slug}/",
-                description=render_article(config, slug, args)["blurb"],
-                guid=PyRSS2Gen.Guid(args["URL_PREFIX"] + f"/blog/{slug}/"),
-                pubDate=datetime.fromisoformat(args["date"]).astimezone(timezone.utc),
+                title=re.sub("<wbr( /)?>", "", article["title"]),
+                link=f"{controller['FULL_URL_PREFIX']}/blog/{slug}/",
+                description=description,
+                guid=PyRSS2Gen.Guid(f"{controller['URL_PREFIX']}/blog/{slug}/"),
+                pubDate=date,
             )
         )
+
+        if len(items) > 50:
+            break
 
     rss = PyRSS2Gen.RSS2(
         title="ongardie.net",
         link=controller["FULL_URL_PREFIX"] + "/blog/",
         description="Diego Ongaro's Blog",
-        lastBuildDate=datetime.now(),
+        lastBuildDate=now,
         items=items,
     )
     return rss.to_xml(encoding="utf-8")
