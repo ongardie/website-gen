@@ -41,8 +41,19 @@ def render_article(config, slug, args):
 def article(config, slug):
     args = config["blog"][slug].copy()
     args.update(config["controller"])
+    args["FULL_URL"] = f"{args['FULL_URL_PREFIX']}/blog/{slug}/"
     args["blurb"] = render_article(config, slug, args)["blurb"]
     args["PAGE_TITLE"] = args["title"]
+    if "plaintitle" in args:
+        args["PLAIN_TITLE"] = args["plaintitle"]
+    else:
+        args["PLAIN_TITLE"] = args["title"]
+    args["OPENGRAPH"] = [
+        ("og:type", "article"),
+        ("og:description", args["description"]),
+        ("og:article:published_time", args["date"][:10]),
+        ("og:article:author", args["FULL_URL_PREFIX"] + args["AUTHOR_PAGE"]),
+    ]
     args["CONTENT"] = render_file(
         Path(config["env"]["var"], "templates", "blog", "one.html"), args
     )
@@ -61,8 +72,11 @@ def rss(config):
         article_args = article.copy()
         article_args.update(controller)
         article.update(render_article(config, slug, article_args))
-        date = datetime.fromisoformat(article["date"]).astimezone(timezone.utc)
 
+        if "plaintitle" not in article:
+            article["plaintitle"] = article["title"]
+
+        date = datetime.fromisoformat(article["date"]).astimezone(timezone.utc)
         if "summary" in article and (
             now - date > timedelta(days=5 * 365) or len(items) > 10
         ):
@@ -74,7 +88,7 @@ def rss(config):
 
         items.append(
             PyRSS2Gen.RSSItem(
-                title=re.sub("<wbr( /)?>", "", article["title"]),
+                title=article["plaintitle"],
                 link=f"{controller['FULL_URL_PREFIX']}/blog/{slug}/",
                 description=description,
                 guid=PyRSS2Gen.Guid(f"{controller['URL_PREFIX']}/blog/{slug}/"),
@@ -88,7 +102,7 @@ def rss(config):
     rss = PyRSS2Gen.RSS2(
         title="ongardie.net",
         link=controller["FULL_URL_PREFIX"] + "/blog/",
-        description="Diego Ongaro's Blog",
+        description=f"{controller['AUTHOR']}'s Blog",
         lastBuildDate=now,
         items=items,
     )
@@ -111,6 +125,11 @@ def index(config, *, tag=None):
         args["PAGE_TITLE"] = "Blog Index"
     else:
         args["PAGE_TITLE"] = f"Blog: {tag} Tag"
+    args["PLAIN_TITLE"] = args["PAGE_TITLE"]
+    args["FULL_URL"] = args["FULL_URL_PREFIX"] + "/blog/"
+    args["OPENGRAPH"] = [
+        ("og:description", f"{args['AUTHOR']}'s blog."),
+    ]
     args["articles"] = articles
     args["CONTENT"] = render_file(
         Path(config["env"]["var"], "templates", "blog", "index.html"), args

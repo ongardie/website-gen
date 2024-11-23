@@ -23,6 +23,8 @@ alternatives like [Hugo](https://gohugo.io/) and
     [controller]
     URL_PREFIX =
     FULL_URL_PREFIX = http://localhost:8000
+    AUTHOR = Your Name
+    AUTHOR_PAGE = /you
     ```
 
 3. Create a "var" directory with templates and content.

@@ -22,7 +22,7 @@ def read_ini(filename):
         def optionxform(self, option):
             return option
 
-    config = ConfigParser()
+    config = ConfigParser(delimiters="=")
     config.read_file(open(filename))
     return {
         name: dict(section)
@@ -94,7 +94,17 @@ def main(env):
     for slug, values in config["static"].items():
         args = {
             "PAGE_TITLE": values["title"],
+            "OPENGRAPH": [
+                ("og:description", values["description"]),
+            ],
         }
+        if "plaintitle" in values:
+            args["PLAIN_TITLE"] = values["plaintitle"]
+        else:
+            args["PLAIN_TITLE"] = args["PAGE_TITLE"]
+        for key, value in values.items():
+            if key.startswith("og:"):
+                args["OPENGRAPH"].append((key, value))
         try:
             with open(
                 Path(config["env"]["var"], "blurbs", slug, "data.csv"), newline=""
@@ -103,6 +113,7 @@ def main(env):
         except IOError:
             pass
         args.update(config["controller"])
+        args["FULL_URL"] = args["FULL_URL_PREFIX"] + values["url"]
 
         try:
             args["CONTENT"] = render_file(
