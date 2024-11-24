@@ -7,18 +7,24 @@ import pygments
 import re
 
 
+# Prevent Mako from consuming trailing backslashes, as those are often used in
+# code blocks.
+def backslash_preprocessor(input):
+    return re.sub(r"\\$", r"🔕TRAILINGBACKSLASH🔕", input, flags=re.M)
+
+
+def backslash_postprocessor(input):
+    return re.sub(r"🔕TRAILINGBACKSLASH🔕$", r"\\", input, flags=re.M)
+
+
 # A line starting with a '##' is a comment in Mako and a header in Markdown.
 # We want Markdown's meaning,
 def md_preprocessor(input):
-    output = []
-    for line in input.split("\n"):
-        m = re.match(r"^[\t ]*(#{2,6}) (.*)$", line)
-        if m is None:
-            output.append(line)
-        else:
-            size = str(len(m.group(1)))
-            output.append(f"<h{size}>{m.group(2)}</h{size}>")
-    return "\n".join(output)
+    return re.sub("^##", "#🤫LEADINGDOUBLECOMMENT🤫", input, flags=re.M)
+
+
+def md_postprocessor(input):
+    return re.sub("^#🤫LEADINGDOUBLECOMMENT🤫", "##", input, flags=re.M)
 
 
 def highlighter(content, lang, attrs):
@@ -32,9 +38,17 @@ def highlighter(content, lang, attrs):
 def render_file(file, args):
     body = open(file).read()
     if str(file).endswith(".md"):
-        out = Template(
-            body, preprocessor=md_preprocessor, strict_undefined=True
-        ).render(**args)
+        out = backslash_postprocessor(
+            md_postprocessor(
+                Template(
+                    body,
+                    preprocessor=lambda input: md_preprocessor(
+                        backslash_preprocessor(input)
+                    ),
+                    strict_undefined=True,
+                ).render(**args)
+            )
+        )
 
         return (
             MarkdownIt(
@@ -47,4 +61,8 @@ def render_file(file, args):
             .render(out)
         )
     else:
-        return Template(body, strict_undefined=True).render(**args)
+        return backslash_postprocessor(
+            Template(
+                body, preprocessor=backslash_preprocessor, strict_undefined=True
+            ).render(**args)
+        )
