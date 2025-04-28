@@ -30,7 +30,14 @@ def md_postprocessor(input):
 def highlighter(content, lang, attrs):
     if lang == "":
         return content
-    lexer = pygments.lexers.get_lexer_by_name(lang)
+    try:
+        lexer = pygments.lexers.get_lexer_by_name(lang)
+    except:
+        if lang == "nushell":
+            lexer = pygments.lexers.get_lexer_by_name("perl")
+        else:
+            raise
+
     formatter = pygments.formatters.HtmlFormatter(classprefix="hl-", nowrap=True)
     return pygments.highlight(content, lexer, formatter)
 
